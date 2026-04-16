@@ -13,33 +13,76 @@ export function PIIMasker() {
   const [copied, setCopied] = useState(false);
 
   const maskText = useCallback((text: string) => {
-    const newMappings: PIIMapping[] = [];
-    let maskedText = text;
+    type MatchEntry = {
+      start: number;
+      end: number;
+      match: string;
+      pattern: (typeof PII_PATTERNS)[number];
+      priority: number;
+    };
 
-    PII_PATTERNS.forEach((pattern) => {
-      const regex = new RegExp(pattern.regex.source, pattern.regex.flags);
-      let matchIndex = 0;
-
-      maskedText = maskedText.replace(regex, (match) => {
-        const replacement = pattern.replacement(
-          match,
-          newMappings.filter((m) => m.type === pattern.type).length + matchIndex
-        );
-        matchIndex++;
-
-        newMappings.push({
-          id: `${pattern.type}_${Date.now()}_${Math.random()}`,
-          type: pattern.name,
-          original: match,
-          masked: replacement,
+    // 1. Collect every match from every pattern on the ORIGINAL text.
+    const allMatches: MatchEntry[] = [];
+    PII_PATTERNS.forEach((pattern, priorityIndex) => {
+      const flags = pattern.regex.flags.includes("g")
+        ? pattern.regex.flags
+        : pattern.regex.flags + "g";
+      const regex = new RegExp(pattern.regex.source, flags);
+      let m: RegExpExecArray | null;
+      while ((m = regex.exec(text)) !== null) {
+        allMatches.push({
+          start: m.index,
+          end: m.index + m[0].length,
+          match: m[0],
+          pattern,
+          priority: priorityIndex,
         });
-
-        return replacement;
-      });
+        if (m[0].length === 0) regex.lastIndex++; // guard against zero-length matches
+      }
     });
 
+    // 2. Sort by start position; ties broken by priority (lower = higher priority).
+    allMatches.sort((a, b) =>
+      a.start !== b.start ? a.start - b.start : a.priority - b.priority
+    );
+
+    // 3. Remove overlapping matches — keep the highest-priority (lowest index) one.
+    const selected: MatchEntry[] = [];
+    let lastEnd = 0;
+    for (const m of allMatches) {
+      if (m.start >= lastEnd) {
+        selected.push(m);
+        lastEnd = m.end;
+      }
+    }
+
+    // 4. Assign replacement labels left-to-right so numbering is sequential.
+    const typeCounters: Record<string, number> = {};
+    const newMappings: PIIMapping[] = [];
+    const replacements = selected.map((m) => {
+      typeCounters[m.pattern.type] = (typeCounters[m.pattern.type] || 0) + 1;
+      const masked = m.pattern.replacement(
+        m.match,
+        typeCounters[m.pattern.type] - 1
+      );
+      newMappings.push({
+        id: `${m.pattern.type}_${m.start}`,
+        type: m.pattern.name,
+        original: m.match,
+        masked,
+      });
+      return { ...m, masked };
+    });
+
+    // 5. Apply replacements right-to-left so earlier positions stay valid.
+    let result = text;
+    for (let i = replacements.length - 1; i >= 0; i--) {
+      const r = replacements[i];
+      result = result.slice(0, r.start) + r.masked + result.slice(r.end);
+    }
+
     setMappings(newMappings);
-    return maskedText;
+    return result;
   }, []);
 
   const maskedOutput = useMemo(() => {
