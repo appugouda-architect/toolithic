@@ -10,8 +10,9 @@
         "Id": "toolithic-origin",
         "DomainName": "toolithic-prod.s3.us-east-1.amazonaws.com",
         "S3OriginConfig": {
-          "OriginAccessControlId": "E3JAUXPLE1IEY0"
-        }
+          "OriginAccessIdentity": ""
+        },
+        "OriginAccessControlId": "E3JAUXPLE1IEY0"
       }
     ]
   },

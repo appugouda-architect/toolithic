@@ -1,0 +1,7 @@
+aws_region       = "us-east-1"
+project_name     = "toolithic"
+bucket_name      = "toolithic-prod"
+domain_name      = "tools.architectwithappu.online"
+hosted_zone_name = "architectwithappu.online"
+github_org       = "appugoudapatil"
+github_repo      = "my-master-tool-kit"
