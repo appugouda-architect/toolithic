@@ -44,3 +44,10 @@ next-env.d.ts
 
 deployment-instructions.md
 implementation_plan.md
+
+tmp.json
+disabled.json
+dist-full.json
+dist-patched.json
+saved-addresses.md
+terraform-cicd-implementation.md

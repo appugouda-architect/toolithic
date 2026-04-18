@@ -10,7 +10,7 @@
         "Id": "toolithic-origin",
         "DomainName": "toolithic-prod.s3.us-east-1.amazonaws.com",
         "S3OriginConfig": {
-          "OriginAccessControlId": "E3JAUXPLE1IEY0"
+          "OriginAccessControlId": "E1CKE6IV9FIHRJ"
         }
       }
     ]
@@ -20,7 +20,10 @@
     "ViewerProtocolPolicy": "redirect-to-https",
     "AllowedMethods": {
       "Quantity": 2,
-      "Items": ["GET", "HEAD"]
+      "Items": [
+        "GET",
+        "HEAD"
+      ]
     },
     "Compress": true
   }
