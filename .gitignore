@@ -51,3 +51,5 @@ dist-full.json
 dist-patched.json
 saved-addresses.md
 terraform-cicd-implementation.md
+
+.terraform
