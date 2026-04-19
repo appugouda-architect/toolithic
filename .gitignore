@@ -53,3 +53,6 @@ saved-addresses.md
 terraform-cicd-implementation.md
 
 .terraform
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.lock.hcl
