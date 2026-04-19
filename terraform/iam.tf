@@ -8,9 +8,13 @@ resource "aws_iam_openid_connect_provider" "github" {
 
   client_id_list = ["sts.amazonaws.com"]
 
-  # GitHub's current OIDC thumbprint — stable, but verify at:
-  # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+  # AWS validates GitHub OIDC via its own trust store — thumbprints are still
+  # required by the resource schema but are not used for verification.
+  # Both values below are GitHub's published thumbprints (primary + backup).
+  thumbprint_list = [
+    "6938fd4d98bab03faadb97b34396831e3780aea1",
+    "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
+  ]
 }
 
 # IAM role assumed by GitHub Actions during the deploy workflow
@@ -31,17 +35,20 @@ data "aws_iam_policy_document" "github_oidc_trust" {
       identifiers = [aws_iam_openid_connect_provider.github.arn]
     }
 
-    # Scope to your repo + main branch only — prevents forks from assuming this role
+    # aud must always equal sts.amazonaws.com when using aws-actions/configure-aws-credentials
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
 
+    # Wildcard on the sub claim covers all trigger types (push, workflow_dispatch,
+    # pull_request, etc.) while still locking access to this specific repo only.
+    # Format: repo:<org>/<repo>:<context> where context varies by trigger type.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"]
+      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
     }
   }
 }
