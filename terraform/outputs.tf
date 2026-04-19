@@ -4,7 +4,7 @@ output "site_url" {
 }
 
 output "cloudfront_distribution_id" {
-  description = "CloudFront distribution ID — used by GitHub Actions for cache invalidation"
+  description = "CloudFront distribution ID — add as GitHub secret CLOUDFRONT_DISTRIBUTION_ID"
   value       = aws_cloudfront_distribution.site.id
 }
 
@@ -14,11 +14,18 @@ output "cloudfront_domain" {
 }
 
 output "s3_bucket_name" {
-  description = "S3 bucket name — used by GitHub Actions for deployment sync"
+  description = "S3 bucket name — add as GitHub secret S3_BUCKET_NAME"
   value       = aws_s3_bucket.site.bucket
 }
 
-output "github_actions_role_arn" {
-  description = "IAM role ARN — paste this into GitHub Actions secret AWS_ROLE_ARN"
-  value       = aws_iam_role.github_actions_deploy.arn
+output "aws_access_key_id" {
+  description = "GitHub Actions deploy user access key ID — add as GitHub secret AWS_ACCESS_KEY_ID"
+  value       = aws_iam_access_key.github_actions_deploy.id
+  sensitive   = true
+}
+
+output "aws_secret_access_key" {
+  description = "GitHub Actions deploy user secret key — add as GitHub secret AWS_SECRET_ACCESS_KEY"
+  value       = aws_iam_access_key.github_actions_deploy.secret
+  sensitive   = true
 }
